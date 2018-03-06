@@ -6,7 +6,6 @@ class ProcOSStat(reader: ProcOSReader) : ProcOSEntry(reader) {
 
     companion object {
 
-        /** /proc/stat tokens  */
         private val CPU_TOKEN = "cpu"
         private val PAGE = "page"
         private val SWAP = "swap"
