@@ -1,4 +1,3 @@
-
 package io.pivotal.gemfire.micrometer.procOS
 
 import org.slf4j.LoggerFactory
@@ -9,23 +8,28 @@ abstract class ProcOSEntry protected constructor(private val reader: ProcOSReade
     private var lastResult: ProcOSReader.ReadResult = ProcOSReader.ReadResult(emptyList(), -1L)
     private val REFRESH_TIMEOUT_MILLIS = 2000L
     private val dataLock = Any()
+    private var dataResult = emptyMap<ValueKey, Double>()
 
     interface ValueKey
 
     operator fun get(key: ValueKey): Double {
-        val collect = collect()
-        val returnValue = collect.getOrDefault(key, (-1).toDouble())
-        return returnValue
+        if (lastResult.readTime + REFRESH_TIMEOUT_MILLIS < System.currentTimeMillis()) {
+            refresh()
+            dataResult = collect(lastResult)
+        }
+        return dataResult.getOrDefault(key, (-1).toDouble())
     }
-    private fun collect(): Map<ValueKey, Double> {
+
+    private fun collect(result: ProcOSReader.ReadResult): Map<ValueKey, Double> {
+        return handle(result.lines)
+    }
+
+    private fun refresh() {
         synchronized(dataLock) {
-            if (lastResult.readTime + REFRESH_TIMEOUT_MILLIS < System.currentTimeMillis()) {
-                var result = reader.read()
-                if (lastResult.readTime != result.readTime) {
-                    lastResult = result
-                }
+            var result = reader.read()
+            if (lastResult.readTime != result.readTime) {
+                lastResult = result
             }
-            return handle(lastResult.lines)
         }
     }
 

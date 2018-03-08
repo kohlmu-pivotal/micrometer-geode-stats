@@ -48,7 +48,6 @@ class ProcOSStat(reader: ProcOSReader) : ProcOSEntry(reader) {
     override fun handle(lines: Collection<String>): Map<ProcOSEntry.ValueKey, Double> {
         val result = HashMap<ValueKey, Double>()
         lines
-                .asSequence()
                 .map { it.split(" ") }
                 .forEach {
                     when (it[0]) {
