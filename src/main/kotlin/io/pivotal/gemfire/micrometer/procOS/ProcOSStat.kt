@@ -45,6 +45,8 @@ class ProcOSStat(reader: ProcOSReader) : ProcOSEntry(reader) {
         }
     }
 
+    private val previousDataset = HashMap<ValueKey, Double>()
+
     override fun handle(lines: Collection<String>): Map<ProcOSEntry.ValueKey, Double> {
         val result = HashMap<ValueKey, Double>()
         lines
@@ -55,30 +57,36 @@ class ProcOSStat(reader: ProcOSReader) : ProcOSEntry(reader) {
 
                         CPU_TOKEN -> {
                             val cpuData = calculateStats(it)
-                            result[IDLE] = cpuData[IDLE.ordinal]
-                            result[NICE] = cpuData[CPU.NICE.ordinal]
-                            result[SYSTEM] = cpuData[CPU.SYSTEM.ordinal]
-                            result[USER] = cpuData[CPU.USER.ordinal]
-                            result[STEAL] = cpuData[CPU.STEAL.ordinal]
-                            result[IOWAIT] = cpuData[CPU.IOWAIT.ordinal]
-                            result[IRQ] = cpuData[CPU.IRQ.ordinal]
-                            result[SOFTIRQ] = cpuData[CPU.SOFTIRQ.ordinal]
-                            result[GUEST] = cpuData[CPU.GUEST.ordinal]
-                            result[GUEST_NICE] = cpuData[CPU.GUEST_NICE.ordinal]
+                            result[IDLE] = computeDifference(cpuData[CPU.IDLE.ordinal],IDLE)
+                            result[NICE] = computeDifference(cpuData[CPU.NICE.ordinal], NICE)
+                            result[SYSTEM] = computeDifference(cpuData[CPU.SYSTEM.ordinal], SYSTEM)
+                            result[USER] = computeDifference(cpuData[CPU.USER.ordinal], USER)
+                            result[STEAL] = computeDifference(cpuData[CPU.STEAL.ordinal], STEAL)
+                            result[IOWAIT] = computeDifference(cpuData[CPU.IOWAIT.ordinal], IOWAIT)
+                            result[IRQ] = computeDifference(cpuData[CPU.IRQ.ordinal], IRQ)
+                            result[SOFTIRQ] = computeDifference(cpuData[CPU.SOFTIRQ.ordinal], SOFTIRQ)
+                            result[GUEST] = computeDifference(cpuData[CPU.GUEST.ordinal], GUEST)
+                            result[GUEST_NICE] = computeDifference(cpuData[CPU.GUEST_NICE.ordinal], GUEST_NICE)
                         }
                         PAGE -> {
-                            result[Paging.PAGE_IN] = it[1].toDouble()
-                            result[Paging.PAGE_OUT] = it[2].toDouble()
+                            result[Paging.PAGE_IN] = computeDifference(it[1].toDouble(), Paging.PAGE_IN)
+                            result[Paging.PAGE_OUT] = computeDifference(it[2].toDouble(), Paging.PAGE_IN)
                         }
                         SWAP -> {
-                            result[Swap.SWAPIN] = it[1].toDouble()
-                            result[Swap.SWAPOUT] = it[2].toDouble()
+                            result[Swap.SWAPIN] = computeDifference(it[1].toDouble(), Swap.SWAPIN)
+                            result[Swap.SWAPOUT] = computeDifference(it[2].toDouble(), Swap.SWAPOUT)
                         }
-                        CTXT -> result[Context.SWITCHES] = it[1].toDouble()
-                        PROCESSES -> result[Processes.COUNT] = it[1].toDouble()
+                        CTXT -> result[Context.SWITCHES] = computeDifference(it[1].toDouble(), Context.SWITCHES)
+                        PROCESSES -> result[Processes.COUNT] = computeDifference(it[1].toDouble(), Processes.COUNT)
                     }
                 }
         return result
+    }
+
+    private fun computeDifference(cpuData: Double, valueKey: ValueKey) : Double {
+        val difference = cpuData - previousDataset.getOrDefault(valueKey, 0.toDouble())
+        previousDataset[valueKey] = cpuData
+        return difference
     }
 
     private fun calculateStats(dataLine: List<String>): Array<Double> {
