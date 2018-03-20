@@ -13,49 +13,49 @@ class StatMetrics(val tags: Iterable<Tag> = emptyList(), val procOSStat: ProcOSS
 
     override fun bindTo(registry: MeterRegistry) {
 
-        Gauge.builder("system.cpu", procOSStat, { it[ProcOSStat.Companion.CPU.SYSTEM] }).tags(getCPUTags(tags, "system")).register(registry)
-        Gauge.builder("system.cpu", procOSStat, { it[ProcOSStat.Companion.CPU.NICE] }).tags(getCPUTags(tags, "nice")).register(registry)
-        Gauge.builder("system.cpu", procOSStat, { it[ProcOSStat.Companion.CPU.IDLE] }).tags(getCPUTags(tags, "idle")).register(registry)
-        Gauge.builder("system.cpu", procOSStat, { it[ProcOSStat.Companion.CPU.USER] }).tags(getCPUTags(tags, "user")).register(registry)
-        Gauge.builder("system.cpu.steal", procOSStat, { it[ProcOSStat.Companion.CPU.STEAL] }).tags(tags).register(registry)
-        Gauge.builder("system.cpu.iowait", procOSStat, { it[ProcOSStat.Companion.CPU.IOWAIT] }).tags(tags).register(registry)
-        Gauge.builder("system.cpu.irq", procOSStat, { it[ProcOSStat.Companion.CPU.IRQ] }).tags(tags).register(registry)
-        Gauge.builder("system.cpu.softirq", procOSStat, { it[ProcOSStat.Companion.CPU.SOFTIRQ] }).tags(tags).register(registry)
-        Gauge.builder("system.cpu.guest", procOSStat, { it[ProcOSStat.Companion.CPU.GUEST] }).tags(tags).register(registry)
-        Gauge.builder("system.cpu.guest.nice", procOSStat, { it[ProcOSStat.Companion.CPU.GUEST_NICE] }).tags(tags).register(registry)
+        Gauge.builder("system.cpu", procOSStat, { it[ProcOSStat.Companion.CPU.SYSTEM] })
+                .tags(addCustomTagToTags(tags, "system")).description("Percentage of CPU used")
+                .baseUnit("percentage").register(registry)
+        Gauge.builder("system.cpu", procOSStat, { it[ProcOSStat.Companion.CPU.NICE] })
+                .tags(addCustomTagToTags(tags, "nice")).description("Percentage of CPU used")
+                .baseUnit("percentage").register(registry)
+        Gauge.builder("system.cpu", procOSStat, { it[ProcOSStat.Companion.CPU.IDLE] })
+                .tags(addCustomTagToTags(tags, "idle")).description("Percentage of CPU used")
+                .baseUnit("percentage").register(registry)
+        Gauge.builder("system.cpu", procOSStat, { it[ProcOSStat.Companion.CPU.USER] })
+                .tags(addCustomTagToTags(tags, "user")).description("Percentage of CPU used")
+                .baseUnit("percentage").register(registry)
+        Gauge.builder("system.cpu", procOSStat, { it[ProcOSStat.Companion.CPU.IOWAIT] })
+                .tags(addCustomTagToTags(tags, "iowait")).description("Percentage of CPU used")
+                .baseUnit("percentage").register(registry)
+        Gauge.builder("system.cpu", procOSStat, { it[ProcOSStat.Companion.CPU.IRQ] })
+                .tags(addCustomTagToTags(tags, "irq")).description("Percentage of CPU used")
+                .baseUnit("percentage").register(registry)
+        Gauge.builder("system.cpu", procOSStat, { it[ProcOSStat.Companion.CPU.SOFTIRQ] })
+                .tags(addCustomTagToTags(tags, "softirq")).description("Percentage of CPU used")
+                .baseUnit("percentage").register(registry)
 
+        Gauge.builder("system.paging", procOSStat, { it[ProcOSStat.Companion.Paging.PAGE_IN] })
+                .tags(addCustomTagToTags(tags, "in")).baseUnit("kiloByte").register(registry)
+        Gauge.builder("system.paging", procOSStat, { it[ProcOSStat.Companion.Paging.PAGE_OUT] })
+                .tags(addCustomTagToTags(tags, "out")).baseUnit("kiloByte").register(registry)
 
+        Gauge.builder("system.swap", procOSStat, { it[ProcOSStat.Companion.Swap.SWAPIN] })
+                .tags(addCustomTagToTags(tags, "in")).baseUnit("kiloByte").register(registry)
+        Gauge.builder("system.swap", procOSStat, { it[ProcOSStat.Companion.Swap.SWAPOUT] })
+                .tags(addCustomTagToTags(tags, "out")).baseUnit("kiloByte").register(registry)
 
-        Gauge.builder("system.paging", procOSStat, { it[ProcOSStat.Companion.Paging.PAGE_IN] }).tags(getPagingTags(tags, "in")).baseUnit("kiloByte").register(registry)
-        Gauge.builder("system.paging", procOSStat, { it[ProcOSStat.Companion.Paging.PAGE_OUT] }).tags(getPagingTags(tags, "out")).baseUnit("kiloByte").register(registry)
-
-        Gauge.builder("system.swap", procOSStat, { it[ProcOSStat.Companion.Swap.SWAPIN] }).tags(getSwapTags(tags, "in")).baseUnit("kiloByte").register(registry)
-        Gauge.builder("system.swap", procOSStat, { it[ProcOSStat.Companion.Swap.SWAPOUT] }).tags(getSwapTags(tags, "out")).baseUnit("kiloByte").register(registry)
-
-
-        Gauge.builder("system.context.switches", procOSStat, { it[ProcOSStat.Companion.Context.SWITCHES] }).tags(tags).register(registry)
-        Gauge.builder("system.processes.count", procOSStat, { it[ProcOSStat.Companion.Processes.COUNT] }).tags(tags).register(registry)
+        Gauge.builder("system.context.switches", procOSStat, { it[ProcOSStat.Companion.Context.SWITCHES] })
+                .tags(tags).register(registry)
+        Gauge.builder("system.processes.count", procOSStat, { it[ProcOSStat.Companion.Processes.COUNT] })
+                .tags(tags).register(registry)
 
     }
 
-    private fun getCPUTags(tags: Iterable<Tag>, cpuType: String): Iterable<Tag> {
-        val cpuTags = ArrayList<Tag>()
-        cpuTags.addAll(tags)
-        cpuTags.add(Tag.of("type", cpuType))
-        return cpuTags
-    }
-
-    private fun getSwapTags(tags: Iterable<Tag>, swapType: String): Iterable<Tag> {
-        val cpuTags = ArrayList<Tag>()
-        cpuTags.addAll(tags)
-        cpuTags.add(Tag.of("type", swapType))
-        return cpuTags
-    }
-
-    private fun getPagingTags(tags: Iterable<Tag>, pagingType: String): Iterable<Tag> {
-        val cpuTags = ArrayList<Tag>()
-        cpuTags.addAll(tags)
-        cpuTags.add(Tag.of("type", pagingType))
-        return cpuTags
+    private fun addCustomTagToTags(tags: Iterable<Tag>, tagType: String): Iterable<Tag> {
+        val newTags = ArrayList<Tag>()
+        newTags.addAll(tags)
+        newTags.add(Tag.of("type", tagType))
+        return newTags
     }
 }

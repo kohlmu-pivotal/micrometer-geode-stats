@@ -1,6 +1,7 @@
 package io.pivotal.gemfire.micrometer.procOS
 
 import io.pivotal.gemfire.micrometer.procOS.ProcOSStat.Companion.CPU.*
+import java.util.regex.Pattern
 
 class ProcOSStat(reader: ProcOSReader) : ProcOSEntry(reader) {
 
@@ -19,11 +20,7 @@ class ProcOSStat(reader: ProcOSReader) : ProcOSEntry(reader) {
             IDLE,
             IOWAIT,
             IRQ,
-            SOFTIRQ,
-            STEAL,
-            /** stands for aggregation of all columns not present in the enum list  */
-            GUEST,
-            GUEST_NICE
+            SOFTIRQ
         }
 
         enum class Paging : ValueKey {
@@ -46,27 +43,25 @@ class ProcOSStat(reader: ProcOSReader) : ProcOSEntry(reader) {
     }
 
     private val previousDataset = HashMap<ValueKey, Double>()
+    private val pattern = Pattern.compile("\\s+")
 
     override fun handle(lines: Collection<String>): Map<ProcOSEntry.ValueKey, Double> {
         val result = HashMap<ValueKey, Double>()
         lines
-                .map { it.split(" ") }
+                .map { it.split(pattern) }
                 .forEach {
                     when (it[0]) {
                     //cpu  7979968 8004 2001916 822016041 1053405 0 18328 0 0 0
 
                         CPU_TOKEN -> {
                             val cpuData = calculateStats(it)
-                            result[IDLE] = computeDifference(cpuData[CPU.IDLE.ordinal],IDLE)
-                            result[NICE] = computeDifference(cpuData[CPU.NICE.ordinal], NICE)
-                            result[SYSTEM] = computeDifference(cpuData[CPU.SYSTEM.ordinal], SYSTEM)
-                            result[USER] = computeDifference(cpuData[CPU.USER.ordinal], USER)
-                            result[STEAL] = computeDifference(cpuData[CPU.STEAL.ordinal], STEAL)
-                            result[IOWAIT] = computeDifference(cpuData[CPU.IOWAIT.ordinal], IOWAIT)
-                            result[IRQ] = computeDifference(cpuData[CPU.IRQ.ordinal], IRQ)
-                            result[SOFTIRQ] = computeDifference(cpuData[CPU.SOFTIRQ.ordinal], SOFTIRQ)
-                            result[GUEST] = computeDifference(cpuData[CPU.GUEST.ordinal], GUEST)
-                            result[GUEST_NICE] = computeDifference(cpuData[CPU.GUEST_NICE.ordinal], GUEST_NICE)
+                            result[IDLE] = cpuData[CPU.IDLE.ordinal]
+                            result[NICE] = cpuData[CPU.NICE.ordinal]
+                            result[SYSTEM] = cpuData[CPU.SYSTEM.ordinal]
+                            result[USER] = cpuData[CPU.USER.ordinal]
+                            result[IOWAIT] = cpuData[CPU.IOWAIT.ordinal]
+                            result[IRQ] = cpuData[CPU.IRQ.ordinal]
+                            result[SOFTIRQ] = cpuData[CPU.SOFTIRQ.ordinal]
                         }
                         PAGE -> {
                             result[Paging.PAGE_IN] = computeDifference(it[1].toDouble(), Paging.PAGE_IN)
@@ -90,11 +85,19 @@ class ProcOSStat(reader: ProcOSReader) : ProcOSEntry(reader) {
     }
 
     private fun calculateStats(dataLine: List<String>): Array<Double> {
-        val lengthWithOutLabel = dataLine.size - 2
-        val cpuStatsArray = Array(lengthWithOutLabel, { 0.toDouble() })
+        val enumSize = CPU.values().size
+        val cpuStatsArray = Array(enumSize, { 0.toDouble() })
 
-        for (count in 2 until dataLine.size) {
-            cpuStatsArray[count - 2] = dataLine[count].toDouble()
+        var totalTime:Long = 0
+
+        for (count in 1 until enumSize) {
+            val data = dataLine[count].toLong()
+            totalTime += data
+            cpuStatsArray[count - 1] = data.toDouble()
+        }
+
+        for (count in 0 until enumSize) {
+            cpuStatsArray[count] = cpuStatsArray[count].div(totalTime).times(100)
         }
 
         return cpuStatsArray

@@ -58,19 +58,17 @@ class MicrometerLinuxStats {
 fun main(args: Array<String>) {
     val micrometerLinuxStats = MicrometerLinuxStats()
     val procOSReaderFactory = ProcOSReaderFactory()
-    micrometerLinuxStats.registerMetrics(LoadAvgMetrics(procOSLoadAvg = ProcOSLoadAvg(procOSReaderFactory.getInstance(LoadAvgMetrics.LOADAVG))))
-    micrometerLinuxStats.registerMetrics(MemInfoMetrics(procOSMemInfo = ProcOSMemInfo(procOSReaderFactory.getInstance(MemInfoMetrics.MEMINFO))))
+//    micrometerLinuxStats.registerMetrics(LoadAvgMetrics(procOSLoadAvg = ProcOSLoadAvg(procOSReaderFactory.getInstance(LoadAvgMetrics.LOADAVG))))
+//    micrometerLinuxStats.registerMetrics(MemInfoMetrics(procOSMemInfo = ProcOSMemInfo(procOSReaderFactory.getInstance(MemInfoMetrics.MEMINFO))))
     micrometerLinuxStats.registerMetrics(StatMetrics(procOSStat = ProcOSStat(procOSReaderFactory.getInstance(StatMetrics.STAT))))
 
+//    micrometerLinuxStats.registerMetrics(JvmGcMetrics())
+//    micrometerLinuxStats.registerMetrics(JvmMemoryMetrics())
+//    micrometerLinuxStats.registerMetrics(JvmThreadMetrics())
+//    micrometerLinuxStats.registerMetrics(FileDescriptorMetrics())
 
-
-    micrometerLinuxStats.registerMetrics(JvmGcMetrics())
-    micrometerLinuxStats.registerMetrics(JvmMemoryMetrics())
-    micrometerLinuxStats.registerMetrics(JvmThreadMetrics())
-    micrometerLinuxStats.registerMetrics(FileDescriptorMetrics())
-
-    val executorService = micrometerLinuxStats.createExecutorService()
-    micrometerLinuxStats.registerExecutorMetrics(executorService)
+//    val executorService = micrometerLinuxStats.createExecutorService()
+//    micrometerLinuxStats.registerExecutorMetrics(executorService)
 
 
     Flux.interval(Duration.ofSeconds(1L)).doOnEach { }.blockLast()
