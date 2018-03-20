@@ -4,7 +4,7 @@ import org.slf4j.LoggerFactory
 
 abstract class ProcOSEntry protected constructor(private val reader: ProcOSReader) {
 
-    private val log = LoggerFactory.getLogger(ProcOSEntry::class.java)
+    protected val log = LoggerFactory.getLogger(ProcOSEntry::class.java)
     private var lastResult: ProcOSReader.ReadResult = ProcOSReader.ReadResult(emptyList(), -1L)
     private val REFRESH_TIMEOUT_MILLIS = 2000L
     private val dataLock = Any()
