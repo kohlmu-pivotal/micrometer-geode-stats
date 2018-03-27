@@ -1,5 +1,7 @@
 package io.pivotal.gemfire.micrometer.procOS
 
+import java.util.regex.Pattern
+
 class ProcOSMemInfo(reader: ProcOSReader) : ProcOSEntry(reader) {
     companion object {
         enum class Key : ValueKey {
@@ -15,9 +17,11 @@ class ProcOSMemInfo(reader: ProcOSReader) : ProcOSEntry(reader) {
         }
     }
 
+    private val pattern = Pattern.compile("\\s+")
+
     override fun handle(lines: Collection<String>): Map<ValueKey, Double> {
         val result = HashMap<ValueKey, Double>()
-        lines.map { it.split(" ") }
+        lines.map { it.split(pattern) }
                 .forEach {
                     when (it[0]) {
                         "MemTotal:" -> result[Key.PHYSICAL_MEM] = it[it.size - 2].toDouble()

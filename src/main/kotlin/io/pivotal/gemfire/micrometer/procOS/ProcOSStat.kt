@@ -43,6 +43,7 @@ class ProcOSStat(reader: ProcOSReader) : ProcOSEntry(reader) {
     }
 
     private val previousDataset = HashMap<ValueKey, Double>()
+    private var previousCPUStats = Array(CPU.values().size, { 0L })
     private val pattern = Pattern.compile("\\s+")
 
     override fun handle(lines: Collection<String>): Map<ProcOSEntry.ValueKey, Double> {
@@ -52,13 +53,12 @@ class ProcOSStat(reader: ProcOSReader) : ProcOSEntry(reader) {
                 .forEach {
                     when (it[0]) {
                     //cpu  7979968 8004 2001916 822016041 1053405 0 18328 0 0 0
-
                         CPU_TOKEN -> {
                             val cpuData = calculateStats(it)
-                            result[IDLE] = cpuData[CPU.IDLE.ordinal]
+                            result[USER] = cpuData[CPU.USER.ordinal]
                             result[NICE] = cpuData[CPU.NICE.ordinal]
                             result[SYSTEM] = cpuData[CPU.SYSTEM.ordinal]
-                            result[USER] = cpuData[CPU.USER.ordinal]
+                            result[IDLE] = cpuData[CPU.IDLE.ordinal]
                             result[IOWAIT] = cpuData[CPU.IOWAIT.ordinal]
                             result[IRQ] = cpuData[CPU.IRQ.ordinal]
                             result[SOFTIRQ] = cpuData[CPU.SOFTIRQ.ordinal]
@@ -78,28 +78,46 @@ class ProcOSStat(reader: ProcOSReader) : ProcOSEntry(reader) {
         return result
     }
 
-    private fun computeDifference(cpuData: Double, valueKey: ValueKey) : Double {
+    private fun computeDifference(cpuData: Double, valueKey: ValueKey): Double {
         val difference = cpuData - previousDataset.getOrDefault(valueKey, 0.toDouble())
         previousDataset[valueKey] = cpuData
         return difference
     }
 
     private fun calculateStats(dataLine: List<String>): Array<Double> {
-        val enumSize = CPU.values().size
-        val cpuStatsArray = Array(enumSize, { 0.toDouble() })
+        val newCpuStatsArray = convertStringArrayToLongArray(previousCPUStats.size, dataLine)
+        val deltaCPUStatsArray = calculateDeltaCPUStats(previousCPUStats, newCpuStatsArray)
+        val totalTime = calculateTotalTimeSpent(deltaCPUStatsArray)
 
-        var totalTime:Long = 0
-
-        for (count in 1 until enumSize) {
-            val data = dataLine[count].toLong()
-            totalTime += data
-            cpuStatsArray[count - 1] = data.toDouble()
+        var cpuStatsArray = Array(deltaCPUStatsArray.size, { 0.toDouble() })
+        for (count in 0 until deltaCPUStatsArray.size) {
+            cpuStatsArray[count] = deltaCPUStatsArray[count].toDouble().div(totalTime)
         }
 
-        for (count in 0 until enumSize) {
-            cpuStatsArray[count] = cpuStatsArray[count].div(totalTime).times(100)
-        }
-
+        previousCPUStats = newCpuStatsArray
         return cpuStatsArray
+    }
+
+    private fun calculateDeltaCPUStats(previousCPUStats: Array<Long>, newCpuStatsArray: Array<Long>): Array<Long> {
+        val returnArray = Array(previousCPUStats.size, { 0L })
+        for (index in 0 until previousCPUStats.size) {
+            returnArray[index] = newCpuStatsArray[index] - previousCPUStats[index]
+        }
+        return returnArray
+    }
+
+    private fun calculateTotalTimeSpent(cpuStatsArray: Array<Long>): Long {
+        var totalTime = 0L
+        cpuStatsArray.forEach { totalTime += it }
+        return totalTime
+    }
+
+    private fun convertStringArrayToLongArray(enumSize: Int, dataLine: List<String>): Array<Long> {
+        val longArray = Array(enumSize, { 0L })
+        //cpu  7979968 8004 2001916 822016041 1053405 0 18328 0 0 0
+        for (count in 1 until enumSize) {
+            longArray[count - 1] = dataLine[count].toLong()
+        }
+        return longArray
     }
 }

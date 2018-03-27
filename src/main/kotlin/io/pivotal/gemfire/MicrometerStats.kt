@@ -16,7 +16,7 @@ class MicrometerStats {
         override fun step(): Duration = Duration.ofSeconds(10)
         override fun db(): String = "mydb"
         override fun get(k: String): String? = null
-        override fun uri(): String = "http://localhost:8086"
+        override fun uri(): String = "http://10.118.33.32:8086"
     }, Clock.SYSTEM)
 
     private val jmxMetrics: MeterRegistry = JmxMeterRegistry(JmxConfig.DEFAULT, Clock.SYSTEM)
