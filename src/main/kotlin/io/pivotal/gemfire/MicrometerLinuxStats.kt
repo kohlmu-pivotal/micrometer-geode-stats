@@ -33,7 +33,7 @@ class MicrometerLinuxStats {
         val threadPool = Executors.newWorkStealingPool()
 //        val threadPool = Executors.newFixedThreadPool(20)
         Flux.interval(Duration.ofMillis(50L)).doOnEach {
-            threadPool.submit({
+            threadPool.submit {
                 val nextInt = Random().nextInt(10000)
                 when {
                     nextInt % 7 == 0 -> Thread.sleep(200L)
@@ -41,7 +41,7 @@ class MicrometerLinuxStats {
                     nextInt % 4 == 0 -> Thread.sleep(500L)
                     nextInt % 5 == 0 -> Thread.sleep(1000L)
                 }
-            })
+            }
 
         }.subscribe()
         return threadPool
@@ -58,8 +58,8 @@ class MicrometerLinuxStats {
 fun main(args: Array<String>) {
     val micrometerLinuxStats = MicrometerLinuxStats()
     val procOSReaderFactory = ProcOSReaderFactory()
-    micrometerLinuxStats.registerMetrics(LoadAvgMetrics(procOSLoadAvg = ProcOSLoadAvg(procOSReaderFactory.getInstance(LoadAvgMetrics.LOADAVG))))
-    micrometerLinuxStats.registerMetrics(MemInfoMetrics(procOSMemInfo = ProcOSMemInfo(procOSReaderFactory.getInstance(MemInfoMetrics.MEMINFO))))
+    micrometerLinuxStats.registerMetrics(LoadAvgMetrics(procOSLoadAvg = ProcOSLoadAvg(procOSReaderFactory.getInstance(LoadAvgMetrics.LOAD_AVG))))
+    micrometerLinuxStats.registerMetrics(MemInfoMetrics(procOSMemInfo = ProcOSMemInfo(procOSReaderFactory.getInstance(MemInfoMetrics.MEM_INFO))))
     micrometerLinuxStats.registerMetrics(StatMetrics(procOSStat = ProcOSStat(procOSReaderFactory.getInstance(StatMetrics.STAT))))
 
     micrometerLinuxStats.registerMetrics(JvmGcMetrics())

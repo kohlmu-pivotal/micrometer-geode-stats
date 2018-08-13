@@ -25,17 +25,15 @@ class ProcOSReader internal constructor(private val base: Path, private val entr
 }
 
 class ProcOSReaderFactory {
-    private val instances = HashMap<String, ProcOSReader>()
-    private val instancesLock = Any()
-    private val BASE = Paths.get("/proc")
-
-    fun getInstance(entry: String): ProcOSReader {
-        synchronized(instancesLock) {
-            instances[entry]?.let { return it }
-                    ?: run {
-                        instances[entry] = ProcOSReader(BASE, entry, false)
-                        return instances[entry]!!
-                    }
-        }
+    companion object {
+        private val BASE_PATH = Paths.get("/proc")
     }
+
+    private val instances = HashMap<String, ProcOSReader>()
+
+    fun getInstance(entry: String): ProcOSReader =
+            instances[entry] ?: run {
+                instances[entry] = ProcOSReader(BASE_PATH, entry, false)
+                return instances[entry]!!
+            }
 }
