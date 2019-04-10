@@ -15,6 +15,5 @@ class LoadAvgMetrics(private val tags: Iterable<Tag> = emptyList(), val procOSLo
         Gauge.builder("system.load.average.1m", procOSLoadAvg) { it[ProcOSLoadAvg.Companion.Key.ONE_MIN] }.tags(tags).register(registry)
         Gauge.builder("system.load.average.5m", procOSLoadAvg) { it[ProcOSLoadAvg.Companion.Key.FIVE_MIN] }.tags(tags).register(registry)
         Gauge.builder("system.load.average.15m", procOSLoadAvg) { it[ProcOSLoadAvg.Companion.Key.FIFTEEN_MIN] }.tags(tags).register(registry)
-
     }
 }

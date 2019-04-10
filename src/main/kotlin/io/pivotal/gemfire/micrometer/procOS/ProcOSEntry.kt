@@ -12,8 +12,6 @@ abstract class ProcOSEntry protected constructor(private val reader: ProcOSReade
     private val dataLock = Any()
     private var dataResult = emptyMap<ValueKey, Double>()
 
-    interface ValueKey
-
     operator fun get(key: ValueKey): Double {
         if (lastResult.readTime + REFRESH_TIMEOUT_MILLIS < System.currentTimeMillis()) {
             refresh()
@@ -22,13 +20,11 @@ abstract class ProcOSEntry protected constructor(private val reader: ProcOSReade
         return dataResult.getOrDefault(key, (-1).toDouble())
     }
 
-    private fun collect(result: ProcOSReader.ReadResult): Map<ValueKey, Double> {
-        return handle(result.lines)
-    }
+    private fun collect(result: ProcOSReader.ReadResult): Map<ValueKey, Double> = handle(result.lines)
 
     private fun refresh() {
         synchronized(dataLock) {
-            var result = reader.read()
+            val result = reader.read()
             if (lastResult.readTime != result.readTime) {
                 lastResult = result
             }
@@ -37,4 +33,5 @@ abstract class ProcOSEntry protected constructor(private val reader: ProcOSReade
 
     protected abstract fun handle(lines: Collection<String>): Map<ValueKey, Double>
 
+    interface ValueKey
 }

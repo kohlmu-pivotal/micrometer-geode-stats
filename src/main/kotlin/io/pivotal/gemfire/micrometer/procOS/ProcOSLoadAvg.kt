@@ -23,7 +23,7 @@ class ProcOSLoadAvg(reader: ProcOSReader) : ProcOSEntry(reader) {
             result[Key.FIVE_MIN] = -1.0
             result[Key.FIFTEEN_MIN] = -1.0
         } else {
-            lines.single() {
+            lines.single {
                 // Example of /proc/loadavg
                 // 0.00 0.00 0.07 1/218 7907
                 log.warn(it)

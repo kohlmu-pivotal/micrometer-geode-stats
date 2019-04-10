@@ -66,9 +66,7 @@ fun main(args: Array<String>) {
     micrometerLinuxStats.registerMetrics(JvmMemoryMetrics())
     micrometerLinuxStats.registerMetrics(JvmThreadMetrics())
     micrometerLinuxStats.registerMetrics(FileDescriptorMetrics())
-//
-//    val executorService = micrometerLinuxStats.createExecutorService()
-//    micrometerLinuxStats.registerExecutorMetrics(executorService)
+
 
 
     Flux.interval(Duration.ofSeconds(1L)).doOnEach { }.blockLast()
